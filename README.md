@@ -300,3 +300,10 @@ Essa saída permite que o avaliador veja claramente:
 - Como o problema foi modelado;
 - Quais decisões o algoritmo tomou;
 - Se os recursos (tempo e dinheiro) foram bem aproveitados.
+
+
+Integrantes:
+
+-Lucca Borges RM554608
+-Ruan Vieira RM557599
+-Rodrigo Carnevale RM55814
