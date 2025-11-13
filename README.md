@@ -63,26 +63,22 @@ Função auxiliar para exibir mensagens formatadas no Jupyter Notebook.
 
 ### 3.2 `montar_lista_cursos(area_foco)`
 
-Responsável por construir o **catálogo dinâmico de cursos** de acordo com a área do usuário.
+Esta função monta o catálogo dinâmico de cursos utilizado pelo sistema.
 
-- Começa com uma lista de cursos gerais (válidos para qualquer área);
-- Possui um dicionário `cursos_por_area` com listas de cursos específicos para saúde, direito, educação, engenharia e administração;
-- Se a `area_foco` estiver no dicionário, adiciona todos os cursos daquela área;
-- Caso contrário (área genérica), adiciona apenas o primeiro curso de cada área específica.
+Ela inicia com três cursos gerais e, em seguida, utiliza um dicionário contendo cinco cursos específicos para cada área (saúde, direito, educação, engenharia e administração).
 
-Cada curso é um dicionário com:
+O comportamento é o seguinte:
 
-```python
-{
-    "curso":  "Nome do curso",
-    "area":   "Área temática",
-    "horas":  carga_horaria,
-    "preco":  preco_em_reais,
-    "impacto": nota_de_impacto
-}
-```
+- **Se a área escolhida estiver no dicionário:**
+  - Todos os cursos dessa área são adicionados ao catálogo;
+  - Além disso, três cursos de cada uma das demais áreas também são adicionados, garantindo diversidade;
+  - O catálogo final sempre contém mais de 20 cursos.
 
-Essa lista é a base para o cálculo de relevância e para o problema de mochila.
+- **Se a área for genérica (“todas”) ou inválida:**
+  - Cursos de todas as áreas são adicionados.
+
+Cada curso contém os campos `curso`, `area`, `horas`, `preco` e `impacto`, servindo de base para o cálculo de relevância e para a etapa da mochila.
+
 
 ---
 
