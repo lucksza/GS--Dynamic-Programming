@@ -305,5 +305,7 @@ Essa saída permite que o avaliador veja claramente:
 Integrantes:
 
 -Lucca Borges RM554608
+
 -Ruan Vieira RM557599
+
 -Rodrigo Carnevale RM55814
