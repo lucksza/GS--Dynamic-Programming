@@ -1,307 +1,240 @@
-# Sistema de Recomendação de Cursos com IA
+# Sistema de Recomendação de Cursos com Programação Dinâmica
 
-Este projeto implementa um sistema de recomendação de cursos baseado no perfil profissional do usuário,
-utilizando **recursão**, **memoização** e o **algoritmo da mochila 0/1** para montar um plano de estudos ótimo.
+Este projeto implementa um **sistema de recomendação de cursos de IA** baseado no perfil profissional do usuário, utilizando:
+
+- **Recursão e memoização** em todas as funções principais;
+- **Merge Sort recursivo** para ordenação do catálogo de cursos;
+- **Algoritmo da mochila 0/1 (knapsack)** para montar um plano de estudos ótimo;
+- Saída em **DataFrames e resumo textual** com horas, orçamento e relevância.
+
+O código foi desenvolvido em função do tema da **Global Solution** e atende ao enunciado da disciplina **Dynamic Programming**, incluindo:
+
+- Formulação do problema (entradas, saídas, objetivo);
+- Estrutura de ordenação em dataframe (merge sort);
+- Uso de recursão + memoização;
+- Uso da ideia da mochila;
+- Apresentação de resultados e relatórios;
+- Explicação das funções / estruturas criadas;
+- Catálogo com **20+ cursos diferentes**.
 
 ---
 
 ## 1. Formulação do Problema
 
-**Objetivo:**
+### Objetivo
 
-Montar uma trilha de cursos de IA que maximiza a **relevância total** para o profissional,
-respeitando duas restrições principais:
+Montar uma **trilha de cursos de IA** que maximize a **relevância total** (impacto ajustado) para o profissional, respeitando:
 
-- Horas máximas de estudo disponíveis (`horas_max`);
-- Orçamento máximo para investir em cursos (`orcamento_max`).
+- Limite de **horas semanais de estudo**;
+- Limite de **orçamento máximo** para investimento em cursos.
 
-**Entradas:**
+### Entradas
 
-- Área de atuação (saúde, direito, educação, engenharia, administração ou genérico);
-- Prioridade dada ao tema IA (1 a 10);
-- Estilo de estudo (curto e barato, equilibrado ou aprofundado).
+O sistema pergunta ao usuário:
 
-Essas escolhas definem os parâmetros do problema de mochila.
+- **Área de atuação**:  
+  `saúde`, `tecnologia`, `gestão`, `educação` ou `todas`;
+- **Prioridade** em relação à IA:  
+  `carreira`, `atualização` ou `transição`;
+- **Estilo de estudo**:  
+  `rápido`, `profundo` ou `equilibrado`;
+- **Horas máximas disponíveis** (`horas_max`);
+- **Orçamento máximo disponível** (`orcamento_max`).
 
-**Saídas:**
+### Saídas
 
-- Catálogo de cursos personalizados com relevância calculada;
-- Conjunto de cursos selecionados (trilha ótima);
-- Relatório com horas usadas, orçamento gasto e relevância total.
+- **Catálogo personalizado de cursos**, com campo `impacto_ajustado`;
+- **Catálogo ordenado** por impacto ajustado (decrescente), usando **merge sort recursivo**;
+- **Plano ótimo de estudos**, calculado com o algoritmo da **mochila 0/1**, respeitando horas e orçamento;
+- **Relatório final** com:
+  - Horas usadas;
+  - Orçamento gasto;
+  - Relevância total (impacto ajustado) do plano.
 
 ---
 
-## 2. Fluxo Geral da Aplicação
+## 2. Visão Geral da Solução
+
+Fluxo principal:
 
 1. O usuário executa `executar_sistema()`;
-2. O menu principal pergunta se ele deseja montar um plano de estudos;
-3. Se sim, `coletar_perfil_usuario()` pergunta área, prioridade e estilo de estudo;
-4. Com esses dados, `montar_plano_otimo(...)`:
-   - Gera o catálogo (`montar_lista_cursos`);
-   - Calcula relevância (`calcular_relevancia_cursos`);
-   - Ordena os cursos por relevância/hora (`merge_sort_lista` com recursão + memo);
-   - Aplica o algoritmo da mochila 0/1 (`knapsack` com recursão + lru_cache);
-   - Reconstrói a solução (lista de cursos escolhidos).
-5. O sistema exibe:
-   - Catálogo personalizado;
-   - Trilha ótima;
-   - Resumo (horas usadas, orçamento gasto, relevância total).
+2. O sistema mostra um **menu recursivo** com opções:
+   - (1) Informar/atualizar perfil profissional;
+   - (2) Gerar catálogo personalizado e ordenar;
+   - (3) Calcular plano ótimo pela mochila;
+   - (0) Sair.
+3. Ao informar o perfil, o sistema:
+   - Monta um catálogo com **20+ cursos** via `montar_lista_cursos`;
+   - Ajusta o impacto de cada curso para o perfil do usuário em `calcular_relevancia_cursos`, gerando `impacto_ajustado`;
+   - Ordena o catálogo por impacto ajustado via `merge_sort_lista`;
+   - Aplica a mochila 0/1 em `montar_plano_otimo` para escolher os cursos que maximizam a relevância total dentro das restrições.
+4. O resultado é exibido em:
+   - DataFrame com o catálogo personalizado;
+   - DataFrame com o plano ótimo;
+   - Resumo textual com horas, orçamento e relevância.
 
 ---
 
-## 3. Explicação das Funções
+## 3. Descrição Resumida das Funções
 
-### 3.1 `mostrar(texto)`
+### `mostrar(texto)`
 
-Função auxiliar para exibir mensagens formatadas no Jupyter Notebook.
-
-- Usa `IPython.display.HTML` para mostrar o texto dentro de `<pre>`, mantendo quebras de linha;
-- É usada em menus, títulos de seção e resumo final;
-- Não tem lógica algorítmica (apenas saída), por isso não usa recursão.
-
----
-
-### 3.2 `montar_lista_cursos(area_foco)`
-
-Esta função monta o catálogo dinâmico de cursos utilizado pelo sistema.
-
-Ela inicia com três cursos gerais e, em seguida, utiliza um dicionário contendo cinco cursos específicos para cada área (saúde, direito, educação, engenharia e administração).
-
-O comportamento é o seguinte:
-
-- **Se a área escolhida estiver no dicionário:**
-  - Todos os cursos dessa área são adicionados ao catálogo;
-  - Além disso, três cursos de cada uma das demais áreas também são adicionados, garantindo diversidade;
-  - O catálogo final sempre contém mais de 20 cursos.
-
-- **Se a área for genérica (“todas”) ou inválida:**
-  - Cursos de todas as áreas são adicionados.
-
-Cada curso contém os campos `curso`, `area`, `horas`, `preco` e `impacto`, servindo de base para o cálculo de relevância e para a etapa da mochila.
-
+- Função auxiliar de interface.
+- Divide o texto em linhas, usa **recursão** para imprimir linha a linha.
+- Usa `@lru_cache` para memorizar cada linha (memoização).
+- Ajuda na exibição de menus e relatórios.
 
 ---
 
-### 3.3 `coletar_perfil_usuario()`
+### `montar_lista_cursos(area_foco)`
 
-Lida com toda a coleta de parâmetros do problema via menu textual.
-
-Pergunta ao usuário:
-
-1. **Área de atuação** (1 a 6) → mapeada para strings como `'saúde'`, `'direito'` etc.
-2. **Prioridade em IA** (1 a 10) → trata entradas inválidas e força o valor para ficar entre 1 e 10.
-3. **Estilo de estudo** (1 a 3):
-   - 1: curto e barato → poucas horas e baixo orçamento;
-   - 2: equilibrado → horas e orçamento intermediários;
-   - 3: aprofundado → mais horas e maior orçamento.
-
-Retorna:
-
-```python
-area_foco, prioridade, horas_max, orcamento_max
-```
-
-Esses valores alimentam diretamente `montar_plano_otimo()`.
+- Monta o catálogo de cursos com base na área escolhida.
+- Usa um dicionário `CURSOS_BASE` com cursos de **saúde**, **tecnologia**, **gestão** e **educação** (6 cursos por área, com impacto base, horas e preço).
+- Se `area_foco == "todas"`, junta recursivamente os cursos de todas as áreas.
+- Usa `@lru_cache` em `cursos_por_area(area)` para evitar recomputar listas de cursos por área.
+- Garante mais de 20 cursos no catálogo (requisito do enunciado).
 
 ---
 
-### 3.4 `calcular_relevancia_cursos(cursos, area_foco, prioridade)`
+### `coletar_perfil_usuario()`
 
-Enriquece o catálogo de cursos com um campo adicional: `relevancia`.
-
-Para cada curso:
-
-1. Começa em `base = curso["impacto"]`;
-2. Se a área do curso for igual à área do profissional → `bonus_area = 2`, senão `1`;
-3. Calcula `extra = prioridade // 5`, que pode ser 0, 1 ou 2;
-4. Soma tudo e limita em 10:
-
-```python
-relevancia = min(10, base + bonus_area + extra)
-```
-
-Retorna uma nova lista de cursos, agora cada um com o campo `"relevancia"`.
-Essa relevância será usada como função de valor no problema da mochila.
+- Pergunta recursivamente:
+  - área;
+  - prioridade (carreira/atualização/transição);
+  - estilo (rápido/profundo/equilibrado);
+  - horas_max;
+  - orcamento_max.
+- Usa um dicionário `memo_respostas` para armazenar respostas intermediárias.
+- Retorna um dicionário `perfil` com todas as informações usadas pelo restante da solução.
 
 ---
 
-### 3.5 `merge_sort_lista(lista, chave, memo)`
+### `calcular_relevancia_cursos(cursos, area_foco, prioridade, estilo)`
 
-Implementa o **Merge Sort recursivo com memoização** para ordenação dos cursos.
-
-**Parâmetros:**
-
-- `lista`: lista de elementos (no caso, dicionários de cursos);
-- `chave`: função que recebe um curso e retorna o valor usado na comparação;
-- `memo`: dicionário de cache, onde a chave é uma tupla com os IDs dos elementos da lista.
-
-**Passos:**
-
-1. Constrói `tupla = tuple(id(x) for x in lista)` e verifica se já existe em `memo`.
-   - Se existir, retorna a versão já ordenada → **memoização manual**.
-2. Se o tamanho da lista for 0 ou 1, é o **caso base da recursão**:
-   - Armazena no memo e retorna a própria lista.
-3. Para listas maiores:
-   - Calcula o meio: `meio = len(lista) // 2`;
-   - Chama recursivamente para as duas metades:
-     - `e = merge_sort_lista(lista[:meio], chave, memo)`
-     - `d = merge_sort_lista(lista[meio:], chave, memo)`
-4. Faz o **merge** (intercalação) das duas metades ordenadas, comparando `chave(e[i])` e `chave(d[j])` até consumir todos os elementos.
-5. Salva o resultado em `memo[tupla]` e retorna a lista ordenada.
-
-Na aplicação, a chave usada é:
-
-```python
-lambda c: c["relevancia"] / c["horas"]
-```
-
-Ou seja, cursos com maior relevância por hora tendem a ficar mais bem posicionados.
+- Calcula o **impacto ajustado** (`impacto_ajustado`) de cada curso, que é a **relevância personalizada** para aquele usuário.
+- Para cada curso:
+  - Leva em conta:
+    - impacto base (`impacto`);
+    - prioridade (peso de 1.0 a ~1.3);
+    - estilo de estudo (peso de 1.0 a ~1.2);
+    - bônus se o curso for da mesma área que o usuário.
+- Usa funções auxiliares com memoização:
+  - `peso_prioridade(p)` com `@lru_cache`;
+  - `peso_estilo(e)` com `@lru_cache`.
+- Percorre a lista de cursos **recursivamente** em `processar_indice(i)`.
+- **Limita** o `impacto_ajustado` a **no máximo 10**, atendendo à ideia de uma nota máxima.
+- Retorna nova lista de cursos com o campo `impacto_ajustado`, que será usado na ordenação e na mochila.
 
 ---
 
-### 3.6 `montar_plano_otimo(horas_max, orcamento_max, area_foco, prioridade)`
+### `merge_sort_lista(lista, chave)`
 
-É a função que resolve o problema principal usando o algoritmo da **mochila 0/1** com recursão e memoização.
-
-#### Etapas internas
-
-1. **Gera o catálogo de cursos** da área:
-   ```python
-   cursos = montar_lista_cursos(area_foco)
-   ```
-
-2. **Calcula a relevância de cada curso**:
-   ```python
-   cursos = calcular_relevancia_cursos(cursos, area_foco, prioridade)
-   ```
-
-3. **Ordena os cursos** por relevância/hora usando Merge Sort recursivo com memo:
-   ```python
-   memo_sort = {}
-   cursos_ordenados = merge_sort_lista(
-       cursos,
-       lambda c: c["relevancia"] / c["horas"],
-       memo_sort
-   )
-   ```
-
-4. **Define a função recursiva de mochila 0/1 com memoização automática**:
-
-   ```python
-   @lru_cache(maxsize=None)
-   def knapsack(i, h, o):
-       if i == len(cursos_ordenados) or h == 0 or o == 0:
-           return 0
-
-       curso = cursos_ordenados[i]
-       melhor = knapsack(i+1, h, o)  # não pega o curso
-
-       if curso["horas"] <= h and curso["preco"] <= o:
-           melhor = max(
-               melhor,
-               curso["relevancia"] + knapsack(i+1, h-curso["horas"], o-curso["preco"])
-           )
-       return melhor
-   ```
-
-   - `i`: índice do curso atual;
-   - `h`: horas restantes;
-   - `o`: orçamento restante.
-
-   A função tenta decidir entre **pegar** ou **não pegar** o curso i.  
-   O decorador `@lru_cache` faz a memoização: estados `(i, h, o)` já calculados não são recomputados.
-
-5. **Reconstrução da solução ótima**
-
-   Após obter o valor máximo com `knapsack(0, horas_max, orcamento_max)`, o código percorre os índices
-   e verifica se cada curso faz parte da solução:
-
-   ```python
-   escolhidos = []
-   h = horas_max
-   o = orcamento_max
-   for i in range(len(cursos_ordenados)):
-       if knapsack(i, h, o) != knapsack(i+1, h, o):
-           escolhidos.append(cursos_ordenados[i])
-           h -= cursos_ordenados[i]["horas"]
-           o -= cursos_ordenados[i]["preco"]
-   ```
-
-   Se o valor do estado muda ao pular o curso (`i` → `i+1`), significa que aquele curso contribuiu para a solução ótima,
-   então ele é adicionado à lista `escolhidos` e as restrições `h` e `o` são atualizadas.
-
-6. **Retorno**
-
-   A função retorna:
-
-   - `df_catalogo`: DataFrame com todos os cursos ordenados;
-   - `df_escolhidos`: DataFrame com os cursos da trilha ótima;
-   - `valor_max`: relevância total máxima encontrada pela mochila;
-   - `horas_usadas`: horas realmente usadas;
-   - `orcamento_gasto`: valor realmente gasto.
+- Implementa **Merge Sort recursivo** com **memoização**.
+- Usa a função interna `sort_interval(start, end)` decorada com `@lru_cache(maxsize=None)`:
+  - Caso base: sublista de tamanho 0 ou 1;
+  - Caso recursivo: divide em duas metades, ordena recursivamente e intercala.
+- Ordena a lista de dicionários **em ordem decrescente** pela chave (`chave`).
+- No projeto, a chave utilizada é o campo `"impacto_ajustado"`.
 
 ---
 
-### 3.7 `executar_sistema()`
+### `montar_plano_otimo(cursos, horas_max, orcamento_max)`
 
-Função responsável pelo **menu principal** e pela interação geral com o usuário.
+- Resolve o problema da **mochila 0/1 com duas restrições**:
+  - Tempo (horas);
+  - Orçamento (R$).
+- Usa uma função interna recursiva, com memoização:
+  ```python
+  @lru_cache(maxsize=None)
+  def knapsack(i, horas_restantes, orcamento_restante):
+      ...
+  ```
+- Estados:
+  - `i`: índice do curso;
+  - `horas_restantes`;
+  - `orcamento_restante`.
+- Em cada estado, decide recursivamente **pegar ou não pegar** o curso i, maximizando a soma dos `impacto_ajustado`.
+- Depois reconstrói a lista de cursos escolhidos com a função recursiva `reconstruir(...)`.
+- Retorna:
+  - lista de cursos escolhidos;
+  - horas usadas;
+  - orçamento gasto;
+  - impacto total máximo.
 
-- Exibe o título da plataforma e as opções (montar plano ou sair);
-- Lê a opção digitada pelo usuário;
-- Se for `1`, chama toda a cadeia de funções:
-  - `coletar_perfil_usuario()`
-  - `montar_plano_otimo(...)`
+---
+
+### `executar_sistema()`
+
+- Ponto de entrada da aplicação.
+- Monta um **menu em loop recursivo** (`loop()` chama ele mesmo até o usuário escolher sair).
+- Usa um dicionário `cache` para:
+  - armazenar o perfil;
+  - guardar catálogo gerado;
+  - guardar catálogo ordenado;
+  - guardar plano ótimo.
+- Chama, conforme a opção:
+  - `coletar_perfil_usuario`;
+  - `montar_lista_cursos`;
+  - `calcular_relevancia_cursos`;
+  - `merge_sort_lista`;
+  - `montar_plano_otimo`.
 - Exibe:
-  - O catálogo personalizado de cursos;
-  - A trilha recomendada (se houver);
-  - O resumo com horas usadas, orçamento gasto e relevância total.
-
-Se o usuário escolher `0`, o sistema mostra uma mensagem de saída e encerra o laço.
+  - DataFrame do catálogo;
+  - DataFrame do plano ótimo;
+  - Resumo textual das decisões.
 
 ---
 
-## 4. Recursão e Memoização na Prática
+## 4. Recursão e Memoização
 
-O código usa recursão + memoização de forma explícita em dois pontos essenciais:
+A solução usa **recursão + memoização** de forma explícita em todas as partes centrais:
 
-1. **Ordenação (Merge Sort)** — `merge_sort_lista()`
-   - Recursão: divide a lista em sublistas até o caso base (0 ou 1 elemento);
-   - Memoização: reutiliza resultados para sublistas já ordenadas, usando um dicionário `memo`.
+- `mostrar`: recursão para percorrer linhas, memoização nas linhas;
+- `montar_lista_cursos`: recursão para juntar áreas, memoização por área (`cursos_por_area`);
+- `coletar_perfil_usuario`: recursão na sequência de perguntas, memo das respostas;
+- `calcular_relevancia_cursos`: recursão para percorrer cursos; `@lru_cache` para pesos;
+- `merge_sort_lista`: recursão no Merge Sort; `@lru_cache` em subintervalos (`start`, `end`);
+- `montar_plano_otimo`: recursão na mochila (função `knapsack`); `@lru_cache` nos estados;
+- `executar_sistema`: loop recursivo `loop()` + uso de cache para evitar recomputar.
 
-2. **Mochila 0/1 (Knapsack)** — função interna `knapsack(i, h, o)` em `montar_plano_otimo()`
-   - Recursão: modelo clássico de programação dinâmica top-down;
-   - Memoização: feita via `@lru_cache`, armazenando resultados por estado `(i, h, o)`.
-
-Esses dois blocos cumprem diretamente o que o enunciado exige sobre o uso de recursão e memoização
-nos algoritmos principais da solução (ordenação + mochila).
+Isso atende diretamente ao requisito:  
+> “Todas funções devem ser criadas com recursão e memoização”.
 
 ---
 
-## 5. Estrutura de Saída e Relatórios
+## 5. Como Executar o Projeto
 
-A aplicação exibe os resultados em três blocos principais:
+1. Abrir o código em um **Jupyter Notebook** ou **Google Colab**;
+2. Garantir que as bibliotecas abaixo estão instaladas:
+   - `pandas`
+   - `IPython.display` (já vem no Jupyter/Colab);
+3. Executar a célula com todo o código da solução;
+4. Rodar:
 
-1. **Catálogo de cursos personalizado** (DataFrame):
-   - Mostra todos os cursos considerados, com área, horas, preço e relevância.
+```python
+executar_sistema()
+```
 
-2. **Melhor trilha de cursos** (DataFrame):
-   - Lista apenas os cursos escolhidos pelo algoritmo da mochila 0/1.
+5. Seguir o menu interativo para:
+   - informar o perfil;
+   - gerar catálogo;
+   - calcular plano ótimo.
 
-3. **Resumo textual**:
-   - Horas usadas no plano;
-   - Orçamento efetivamente gasto;
-   - Relevância total alcançada.
+---
 
-Essa saída permite que o avaliador veja claramente:
-- Como o problema foi modelado;
-- Quais decisões o algoritmo tomou;
-- Se os recursos (tempo e dinheiro) foram bem aproveitados.
+## 6. Estrutura do Repositório
 
+Sugestão de estrutura para o GitHub:
+
+```text
+.
+├── codigo.ipynb          # Notebook com todo o código da solução
+├── README.md             # Visão geral, problema, funções e execução
+└── Documentacao.pdf      # Documento detalhado explicando função por função
+```
 
 Integrantes:
 
--Lucca Borges RM554608
-
--Ruan Vieira RM557599
-
--Rodrigo Carnevale RM55814
+- **Lucca Borges – RM 554608**  
+- **Ruan Vieira – RM 557599**  
+- **Rodrigo Carnevale – RM 55814**
