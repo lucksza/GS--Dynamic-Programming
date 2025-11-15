@@ -1,5 +1,11 @@
 # Sistema de Recomendação de Cursos com Programação Dinâmica
 
+Integrantes:
+
+- **Lucca Borges – RM 554608**  
+- **Ruan Vieira – RM 557599**  
+- **Rodrigo Carnevale – RM 55814**
+
 Este projeto implementa um **sistema de recomendação de cursos de IA** baseado no perfil profissional do usuário, utilizando:
 
 - **Recursão e memoização** em todas as funções principais;
@@ -233,8 +239,4 @@ Sugestão de estrutura para o GitHub:
 └── Documentacao.pdf      # Documento detalhado explicando função por função
 ```
 
-Integrantes:
 
-- **Lucca Borges – RM 554608**  
-- **Ruan Vieira – RM 557599**  
-- **Rodrigo Carnevale – RM 55814**
